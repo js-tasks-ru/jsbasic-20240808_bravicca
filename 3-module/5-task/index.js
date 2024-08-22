@@ -1,3 +1,8 @@
 function getMinMax(str) {
-  // ваш код...
-}
+let numbers = str.match(/-?\d+(\.\d+)?/g)
+numbers = numbers.map(Number);
+return {
+  min: Math.min(...numbers),
+  max: Math.max(...numbers)
+};
+}// ваш код...
