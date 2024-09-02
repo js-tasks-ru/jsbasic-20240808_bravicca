@@ -18,7 +18,7 @@ function highlight(table) {
       row.classList.add ('female');
     }
     if (parseInt (ageCell.textContent) < 18) {
-      ageCell.style.textDecoration = 'line-through';
+      row.style.textDecoration = 'line-through';
     }
   });// ваш код...
 }
