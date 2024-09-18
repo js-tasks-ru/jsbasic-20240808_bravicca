@@ -13,23 +13,42 @@ export default class Cart {
   }
 
   addProduct(product) {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    if (!product) {
+      return;
+    }
+    const cartItem = this.cartItems.find(item => item.product.id === product.id);
+
+    if (cartItem) {
+      cartItem.count += 1;
+    } else {
+      this.cartItems.push({ product: product, count: 1 });
+    }
+    this.onProductUpdate(cartItem || this.cartItems[this.cartItems.length - 1]);
   }
 
   updateProductCount(productId, amount) {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    const cartItem = this.cartItems.find(item => item.product.id === productId);
+
+    if (cartItem) {
+      cartItem.count += amount;
+
+      if (cartItem.count <= 0) {
+        this.cartItems = this.cartItems.filter(item => item.product.id !== productId);
+      }
+      this.onProductUpdate(cartItem);
+    }
   }
 
   isEmpty() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    return this.cartItems.length === 0;
   }
 
   getTotalCount() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    return this.cartItems.reduce((total, item) => total + item.count, 0);
   }
 
   getTotalPrice() {
-    // СКОПИРУЙТЕ СЮДЯ СВОЙ КОД
+    return this.cartItems.reduce((total, item) => total + item.product.price * item.count, 0);
   }
 
   renderProduct(product, count) {
@@ -84,17 +103,87 @@ export default class Cart {
   }
 
   renderModal() {
-    // ...ваш код
-  }
+    const modal = new Modal();
+    modal.setTitle("Your order");
+
+    const modalBodyContent = document.createElement('div');
+    
+    this.cartItems.forEach(item => {
+        modalBodyContent.appendChild(this.renderProduct(item));
+    });
+    modalBodyContent.appendChild(this.renderOrderForm());
+
+    modal.setBody(modalBodyContent);
+    const plusButtons = modalBodyContent.querySelectorAll('.cart-product__increase');
+    const minusButtons = modalBodyContent.querySelectorAll('.cart-product__decrease');
+
+    plusButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const productId = button.dataset.productId;
+            this.updateProductCount(productId, 1);
+        });
+    });
+
+    minusButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+            const productId = button.dataset.productId;
+            this.updateProductCount(productId, -1);
+        });
+    });
+
+    const form = modalBodyContent.querySelector('.cart-form');
+    form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        this.onSubmit(event);
+    });
+}
 
   onProductUpdate(cartItem) {
-    // ...ваш код
+    this.update();
+
+    if (document.body.classList.contains('is-modal-open')) {
+        const modalBody = document.querySelector('.modal__body-inner');
+
+        let productId = cartItem.id;
+
+        let productCount = modalBody.querySelector(`[data-product-id="${productId}"] .cart-counter__count`);
+        let productPrice = modalBody.querySelector(`[data-product-id="${productId}"] .cart-product__price`);
+        let infoPrice = modalBody.querySelector(`.cart-buttons__info-price`);
+
+        if (cartItem.count === 0) {
+            modal.close();
+            return;
+        }
+
+        productCount.innerHTML = cartItem.count;
+
+        productPrice.innerHTML = `€${(cartItem.price * cartItem.count).toFixed(2)}`;
+
+        const totalCost = this.calculateTotalCost();
+        infoPrice.innerHTML = `€${totalCost.toFixed(2)}`;
+    }
 
     this.cartIcon.update(this);
   }
 
   onSubmit(event) {
-    // ...ваш код
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    submitButton.classList.add('is-loading');
+
+    const formData = new FormData(event.target);
+
+    fetch("https://httpbin.org/post", {
+        method: "POST",
+        body: formData,
+    }).then(response => {
+        return response.json();
+    }).then(data => {
+        this.handleSuccess();
+    }).catch(error => {
+        console.error("Error:", error);
+    }).finally(() => {
+        submitButton.classList.remove('is-loading');
+    });
   };
 
   addEventListeners() {
