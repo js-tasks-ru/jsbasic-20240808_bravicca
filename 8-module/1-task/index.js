@@ -39,6 +39,46 @@ export default class CartIcon {
   }
 
   updatePosition() {
-    // ваш код ...
-  }
+    if (this.hasItemsInCart() && this.isVisible()) {
+      const scrollY = window.scrollY || window.pageYOffset;
+      const iconHeight = this.iconElement.offsetHeight;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      if (scrollY + iconHeight > windowHeight) {
+        const containerRect = this.containerElement.getBoundingClientRect();
+        const containerRightOffset = containerRect.right + window.scrollX;
+        const newTop = Math.max(50, scrollY + 50) + 'px';
+        const newRight = Math.min(containerRightOffset + 20, window.innerWidth - 10) + 'px';
+
+        this.iconElement.style.position = 'fixed';
+        this.iconElement.style.top = newTop;
+        this.iconElement.style.right = newRight;
+        this.visible = true;
+    } else if (this.visible) {
+        this.resetPosition();
+    }
+} else if (this.visible) {
+    this.resetPosition();
 }
+}
+
+resetPosition() {
+this.iconElement.style.position = '';
+this.iconElement.style.top = '';
+this.iconElement.style.right = '';
+this.visible = false;
+}
+
+hasItemsInCart() {
+return true;
+}
+
+isVisible() {
+return document.documentElement.offsetHeight > 0 && document.documentElement.offsetWidth > 0;
+}
+
+addEventListeners() {
+window.addEventListener('scroll', this.updatePosition.bind(this));
+window.addEventListener('resize', this.updatePosition.bind(this));
+}
+  }
